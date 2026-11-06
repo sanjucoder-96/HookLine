@@ -1,0 +1,19 @@
+# Keep the build context small and the image clean.
+target/
+.git/
+.gitignore
+.gitattributes
+.idea/
+*.iml
+*.log
+.mvn/
+
+# The React console is baked into the jar (src/main/resources/static); no node build here.
+node_modules/
+
+# The Python chaos fleet has its own image (chaos-fleet/Dockerfile); not part of the app image.
+chaos-fleet/.venv/
+**/__pycache__/
+
+# Docs aren't needed to build the jar.
+*.md

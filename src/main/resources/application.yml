@@ -1,0 +1,72 @@
+spring:
+  application:
+    name: hookline
+
+  datasource:
+    # Overridable at runtime for deployment (Render/Railway): set SPRING_DATASOURCE_URL etc.
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/hookline}
+    username: ${SPRING_DATASOURCE_USERNAME:hookline}
+    password: ${SPRING_DATASOURCE_PASSWORD:hookline}
+
+  jpa:
+    hibernate:
+      # Flyway owns the schema. Hibernate must only VALIDATE that our entities
+      # match the migrated tables - never create or alter them.
+      ddl-auto: validate
+    open-in-view: false          # close the DB session at the end of the service call, not the view
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true    # tolerate an existing (non-empty) DB on first run
+
+  data:
+    redis:
+      # Boot 3 moved Redis under spring.data.redis, so the env var is SPRING_DATA_REDIS_HOST.
+      # We add an explicit SPRING_REDIS_HOST placeholder so the shorter name works too.
+      host: ${SPRING_REDIS_HOST:localhost}
+      port: ${SPRING_REDIS_PORT:6379}
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always       # /actuator/health breaks out db + redis component status
+
+logging:
+  level:
+    com.hookline: DEBUG
+
+hookline:
+  delivery:
+    poll-interval-ms: 2000        # how often the outbox poller runs
+    reaper-interval-ms: 30000     # how often we rescue stuck DISPATCHED rows
+    dispatch-timeout-ms: 60000    # a DISPATCHED row older than this is considered orphaned
+    batch-size: 20                # rows claimed per poll
+    max-attempts: 5               # attempts before an event is dead-lettered
+    backoff:
+      base-ms: 3000               # exponential backoff base (full-jitter)
+      cap-ms: 30000               # backoff ceiling
+    http:
+      connect-timeout-ms: 2000
+      read-timeout-ms: 5000
+  dev:
+    seed: true                    # on boot, seed a demo tenant + endpoints (happy/flaky/gone)
+    sample-endpoint-base: http://127.0.0.1:9000   # the chaos fleet
+  triage:
+    enabled: true
+    confidence-threshold: 0.6
+    gemini:
+      api-key: ${GEMINI_API_KEY:}
+      model: gemini-2.5-flash    # 1.5-* is 404 for new projects; 2.5-flash has free-tier quota
+  delay-queue:
+    poll-interval-ms: 1000        # how often the worker releases due retries from the Redis ZSET
+    reconcile-interval-ms: 30000  # rebuild the ZSET from SCHEDULED rows (crash-safety net)

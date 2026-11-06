@@ -1,0 +1,33 @@
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.project
+.classpath
+.factorypath
+.apt_generated
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Python / chaos fleet
+chaos-fleet/.venv/
+**/__pycache__/
+*.pyc
+
+# Secrets / local env
+.env
+*.local
